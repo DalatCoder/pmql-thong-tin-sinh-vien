@@ -22,13 +22,13 @@ Response
     "Id": "",
     "FirstName": null,
     "LastName": null,
-    "FullName": "Nguyễn Trọng Hiếu",
+    "FullName": "",
     "Token": "",
-    "Role": "GV",
+    "Role": "",
     "GraduateLevel": null,
     "IsLogin": true,
     "Message": "",
-    "Expire": "2026-01-06T20:59:55.091096+07:00"
+    "Expire": ""
 }
 ```
 
