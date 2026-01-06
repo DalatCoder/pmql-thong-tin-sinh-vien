@@ -15,6 +15,23 @@ curl --location 'https://portal-api.dlu.edu.vn/api/authenticate/authpsc' \
 }'
 ```
 
+Response
+
+```json 
+{
+    "Id": "",
+    "FirstName": null,
+    "LastName": null,
+    "FullName": "Nguyễn Trọng Hiếu",
+    "Token": "",
+    "Role": "GV",
+    "GraduateLevel": null,
+    "IsLogin": true,
+    "Message": "",
+    "Expire": "2026-01-06T20:59:55.091096+07:00"
+}
+```
+
 ## Lấy danh sách sinh viên trong một lớp học
 
 ```sh

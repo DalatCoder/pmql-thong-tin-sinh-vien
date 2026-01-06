@@ -3,14 +3,12 @@
  * Handles authentication and data fetching from the university portal
  */
 
+import { cookies } from "next/headers";
+
 const PORTAL_BASE_URL = "https://portal-api.dlu.edu.vn/api";
 const PORTAL_API_KEY = process.env.PORTAL_API_KEY!;
 const PORTAL_CLIENT_ID = process.env.PORTAL_CLIENT_ID || "vhu";
-
-interface PortalAuthResponse {
-  token: string;
-  expiresAt: Date;
-}
+const PORTAL_TOKEN_COOKIE = "portal_token";
 
 interface PortalStudentListItem {
   StudentID: string;
@@ -93,46 +91,12 @@ interface PortalStudentContact {
   ClassStudentName: string | null;
 }
 
-// Token cache
-let cachedToken: string | null = null;
-let tokenExpiresAt: Date | null = null;
-
 /**
- * Get a valid authentication token from Portal
+ * Get Bearer token from cookie (đã đăng nhập Portal)
  */
-export async function authenticate(
-  username?: string,
-  password?: string
-): Promise<string> {
-  // Check if we have a valid cached token
-  if (cachedToken && tokenExpiresAt && new Date() < tokenExpiresAt) {
-    return cachedToken;
-  }
-
-  const response = await fetch(`${PORTAL_BASE_URL}/authenticate/authpsc`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      apikey: PORTAL_API_KEY,
-      clientid: PORTAL_CLIENT_ID,
-    },
-    body: JSON.stringify({
-      username: username || "",
-      password: password || "",
-      type: 0,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Portal authentication failed: ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  cachedToken = data.token;
-  // Token expires in 2 hours, cache for 1.5 hours to be safe
-  tokenExpiresAt = new Date(Date.now() + 1.5 * 60 * 60 * 1000);
-
-  return cachedToken!;
+export async function getPortalToken(): Promise<string | null> {
+  const cookieStore = await cookies();
+  return cookieStore.get(PORTAL_TOKEN_COOKIE)?.value || null;
 }
 
 /**
@@ -157,7 +121,8 @@ export async function getStudentsInClass(
   );
 
   if (!response.ok) {
-    throw new Error(`Failed to get students in class: ${response.statusText}`);
+    const text = await response.text();
+    throw new Error(`Failed to get students in class: ${response.status} - ${text}`);
   }
 
   return response.json();
@@ -182,18 +147,11 @@ export async function getStudentInfo(
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to get student info: ${response.statusText}`);
+    const text = await response.text();
+    throw new Error(`Failed to get student info: ${response.status} - ${text}`);
   }
 
   return response.json();
-}
-
-/**
- * Clear the cached token (useful for forcing re-authentication)
- */
-export function clearTokenCache(): void {
-  cachedToken = null;
-  tokenExpiresAt = null;
 }
 
 export type {

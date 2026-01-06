@@ -5,7 +5,7 @@
 
 import prisma from "@/lib/prisma";
 import {
-  authenticate,
+  getPortalToken,
   getStudentsInClass,
   getStudentInfo,
   type PortalStudentDetail,
@@ -76,6 +76,8 @@ export async function syncStudent(
   studentId: string,
   token?: string
 ): Promise<SyncResult> {
+  console.log("[Sync Service] syncStudent called for:", studentId);
+  
   const result: SyncResult = {
     success: true,
     recordsProcessed: 0,
@@ -84,14 +86,24 @@ export async function syncStudent(
   };
 
   try {
-    const authToken = token || (await authenticate());
+    // Lấy token từ cookie nếu không được cung cấp
+    const authToken = token || (await getPortalToken());
+    console.log("[Sync Service] Token available:", !!authToken);
+    
+    if (!authToken) {
+      throw new Error("Chưa đăng nhập Portal. Vui lòng đăng nhập trước khi đồng bộ.");
+    }
+
+    console.log("[Sync Service] Fetching student info from Portal...");
     const data = await getStudentInfo(studentId, authToken);
+    console.log("[Sync Service] Portal response obj1 length:", data.obj1?.length);
 
     if (!data.obj1 || data.obj1.length === 0) {
-      throw new Error("No student data returned from Portal");
+      throw new Error("Không tìm thấy thông tin sinh viên từ Portal");
     }
 
     const transformed = transformStudentData(data.obj1[0]);
+    console.log("[Sync Service] Transformed data for:", transformed.fullName);
 
     // Upsert student - only update portal fields, preserve custom fields
     await prisma.student.upsert({
@@ -155,6 +167,8 @@ export async function syncClass(
   classId: string,
   triggeredBy?: string
 ): Promise<SyncResult> {
+  console.log("[Sync Service] syncClass called for:", classId);
+  
   const result: SyncResult = {
     success: true,
     recordsProcessed: 0,
@@ -163,14 +177,21 @@ export async function syncClass(
   };
 
   try {
-    // 1. Authenticate
-    const token = await authenticate();
+    // 1. Lấy token từ cookie
+    const token = await getPortalToken();
+    console.log("[Sync Service] Portal token available:", !!token);
+    
+    if (!token) {
+      throw new Error("Chưa đăng nhập Portal. Vui lòng đăng nhập trước khi đồng bộ.");
+    }
 
     // 2. Get student list in class
+    console.log("[Sync Service] Fetching student list for class:", classId);
     const studentList = await getStudentsInClass(classId, token);
+    console.log("[Sync Service] Found", studentList?.length || 0, "students in class");
 
     if (!studentList || studentList.length === 0) {
-      throw new Error(`No students found in class ${classId}`);
+      throw new Error(`Không tìm thấy sinh viên trong lớp ${classId}`);
     }
 
     // 3. Ensure class exists
