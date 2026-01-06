@@ -1,0 +1,208 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// =====================
+// AUTHENTICATION
+// =====================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  role          UserRole  @default(LECTURER)
+  professorId   String?   @unique // Mã giảng viên từ Portal
+
+  accounts Account[]
+  sessions Session[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum UserRole {
+  ADMIN           // Quản trị hệ thống
+  LECTURER        // Giảng viên
+  ADVISOR         // Cố vấn học tập
+  STUDENT_AFFAIRS // Công tác sinh viên
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// =====================
+// STUDENT DATA
+// =====================
+
+model Student {
+  id        String @id @default(cuid())
+  studentId String @unique // Mã SV từ Portal: "2312663"
+
+  // === Dữ liệu đồng bộ từ Portal ===
+  lastName   String // "Đỗ Đặng Diệu"
+  firstName  String // "Linh"
+  fullName   String // "Đỗ Đặng Diệu Linh"
+  birthday   DateTime?
+  birthPlace String?
+  gender     Boolean // true = Nam, false = Nữ
+  ethnicName String? // "Kinh"
+  religionName String?
+  idCard     String? // CCCD
+  fileImage  String? // "/HinhSV/2312663.jpg"
+
+  // Thông tin học tập
+  courseId       String? // "DHCQ2023"
+  courseName     String? // "Khóa 47"
+  departmentId   String? // "CT"
+  departmentName String? // "Khoa Công nghệ thông tin"
+  ologyId        String? // Ngành
+  ologyName      String?
+  classStudentId String? // "CTK47A"
+  studyStatusId  String? // "1" = Còn học
+  studyStatusName String? // "Còn học"
+
+  // Chuyên ngành: Năm 1-2 chưa có, Năm 3+ sẽ có
+  // Hậu tố: PM = Kỹ thuật phần mềm, MMT = Mạng máy tính và truyền thông
+  studyProgramId String?  // "CQ23CT-PM"
+  specialtyCode  String?  // "PM", "MMT", null (chưa chọn)
+  specialtyName  String?  // "Kỹ thuật phần mềm", "Mạng máy tính và truyền thông"
+  enrollYear     Int?
+
+  // Liên hệ từ Portal
+  portalPhone   String?
+  portalEmail   String?
+  portalAddress String?
+
+  // Thông tin gia đình từ Portal
+  fatherName         String?
+  motherName         String?
+  contactPersonName  String?
+  contactPersonPhone String?
+
+  // === Dữ liệu bổ sung (quản lý riêng) ===
+  customPhone      String? // SĐT liên hệ cập nhật
+  temporaryAddress String? // Địa chỉ tạm trú
+  permanentAddress String? // Địa chỉ thường trú cập nhật
+  emergencyContact String? // Liên hệ khẩn cấp
+  emergencyPhone   String?
+  notes            String? @db.Text // Ghi chú của GV
+
+  // Email tự động tạo
+  schoolEmail String? // {studentId}@dlu.edu.vn
+
+  // Metadata
+  lastSyncedAt DateTime?
+  syncSource   String?   @default("portal")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  classId String?
+  class   Class?  @relation(fields: [classId], references: [id])
+
+  @@index([classStudentId])
+  @@index([departmentId])
+  @@index([studyStatusId])
+  @@index([fullName])
+}
+
+model Class {
+  id             String @id @default(cuid())
+  classStudentId String @unique // "CTK47A"
+  className      String         // "CTK47A"
+
+  departmentId   String?
+  departmentName String?
+  courseId       String?
+  courseName     String?
+
+  // Cố vấn học tập
+  advisorId   String?
+  advisorName String?
+
+  students Student[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([departmentId])
+  @@index([courseId])
+}
+
+// =====================
+// SYNC MANAGEMENT
+// =====================
+
+model SyncLog {
+  id       String @id @default(cuid())
+  syncType String // "STUDENT_LIST", "STUDENT_DETAIL", "CLASS_SYNC"
+  status   String // "SUCCESS", "FAILED", "PARTIAL"
+  message  String? @db.Text
+  
+  recordsProcessed Int @default(0)
+  recordsFailed    Int @default(0)
+  
+  // Optional: track what was synced
+  targetClassId String?
+  triggeredBy   String? // User ID who triggered
+
+  createdAt DateTime @default(now())
+}
+
+// =====================
+// API KEYS (External API)
+// =====================
+
+model ApiKey {
+  id          String   @id @default(cuid())
+  name        String   // Tên hệ thống sử dụng
+  key         String   @unique
+  isActive    Boolean  @default(true)
+  permissions String[] // ["read:students", "read:classes"]
+
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
