@@ -16,23 +16,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2, RefreshCcw } from "lucide-react";
 
-// Danh sách lớp có sẵn để đồng bộ
-const PREDEFINED_CLASSES = ["CTK48A", "CTK48B", "CTK47A"];
+interface ClassOption {
+  id: string;
+  classStudentId: string;
+}
 
 interface SyncFormProps {
   classes: { classStudentId: string }[];
+  classOptions: ClassOption[];
 }
 
-export function SyncForm({ classes }: SyncFormProps) {
+export function SyncForm({ classes, classOptions }: SyncFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [selectedClass, setSelectedClass] = useState("");
   const [studentId, setStudentId] = useState("");
 
-  // Merge predefined classes với classes từ database (loại bỏ trùng lặp)
+  // Merge class options với classes từ database (loại bỏ trùng lặp)
   const existingClassIds = new Set(classes.map((c) => c.classStudentId));
+  const predefinedClassIds = classOptions.map((c) => c.classStudentId);
   const allClasses = [
-    ...PREDEFINED_CLASSES.filter((c) => !existingClassIds.has(c)),
+    ...predefinedClassIds.filter((c) => !existingClassIds.has(c)),
     ...classes.map((c) => c.classStudentId),
   ].sort();
 

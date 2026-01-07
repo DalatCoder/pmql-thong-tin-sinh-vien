@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SyncForm } from "@/components/features/sync/sync-form";
 import { PortalLoginForm } from "@/components/features/sync/portal-login-form";
-import { RefreshCcw, CheckCircle, XCircle, AlertCircle, KeyRound } from "lucide-react";
+import { ClassOptionsManager } from "@/components/features/sync/class-options-manager";
+import { RefreshCcw, CheckCircle, XCircle, AlertCircle, KeyRound, Settings } from "lucide-react";
 
 async function getSyncLogs() {
   return prisma.syncLog.findMany({
@@ -19,8 +20,19 @@ async function getClasses() {
   });
 }
 
+async function getClassOptions() {
+  return prisma.classOption.findMany({
+    where: { isActive: true },
+    orderBy: [{ displayOrder: "asc" }, { classStudentId: "asc" }],
+  });
+}
+
 export default async function SyncPage() {
-  const [logs, classes] = await Promise.all([getSyncLogs(), getClasses()]);
+  const [logs, classes, classOptions] = await Promise.all([
+    getSyncLogs(),
+    getClasses(),
+    getClassOptions(),
+  ]);
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("vi-VN", {
@@ -84,10 +96,23 @@ export default async function SyncPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <SyncForm classes={classes} />
+            <SyncForm classes={classes} classOptions={classOptions} />
           </CardContent>
         </Card>
       </div>
+
+      {/* Quản lý lớp đồng bộ */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            Quản lý lớp đồng bộ
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ClassOptionsManager classOptions={classOptions} />
+        </CardContent>
+      </Card>
 
       {/* Instructions */}
       <Card>
