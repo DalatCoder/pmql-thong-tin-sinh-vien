@@ -1,11 +1,20 @@
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Check authentication on server side
+  const session = await auth();
+
+  if (!session?.user) {
+    redirect("/login");
+  }
+
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-50 via-white to-violet-50/30">
       {/* Sidebar */}

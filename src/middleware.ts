@@ -1,9 +1,6 @@
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
-// Use Node.js runtime instead of Edge to support Prisma
-export const runtime = "nodejs";
-
 export default auth((req) => {
   const { nextUrl } = req;
   const isLoggedIn = !!req.auth;
@@ -37,7 +34,8 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
-    // Match all routes except static files and public assets
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/dashboard/:path*",
+    "/login",
+    "/api/((?!auth|v1).*)",
   ],
 };
