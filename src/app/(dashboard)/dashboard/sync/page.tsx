@@ -112,7 +112,7 @@ export default async function SyncPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ClassOptionsManager classOptions={classOptions} />
+          <ClassOptionsManager />
         </CardContent>
       </Card>
 

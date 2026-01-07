@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2, RefreshCcw } from "lucide-react";
 
 interface ClassOption {
   id: string;
@@ -24,17 +23,32 @@ interface ClassOption {
   displayOrder: number;
 }
 
-interface ClassOptionsManagerProps {
-  classOptions: ClassOption[];
-}
-
-export function ClassOptionsManager({ classOptions }: ClassOptionsManagerProps) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+export function ClassOptionsManager() {
+  const [classOptions, setClassOptions] = useState<ClassOption[]>([]);
+  const [loading, setLoading] = useState(true);
   const [newClassId, setNewClassId] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Fetch data
+  const fetchData = useCallback(async () => {
+    try {
+      const response = await fetch("/api/class-options");
+      if (response.ok) {
+        const data = await response.json();
+        setClassOptions(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch class options:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleAdd = async () => {
     if (!newClassId.trim()) {
@@ -62,7 +76,9 @@ export function ClassOptionsManager({ classOptions }: ClassOptionsManagerProps) 
       toast.success(`Đã thêm lớp ${result.classStudentId}`);
       setNewClassId("");
       setNewDescription("");
-      startTransition(() => router.refresh());
+      
+      // Refresh data locally
+      await fetchData();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra");
     } finally {
@@ -87,13 +103,23 @@ export function ClassOptionsManager({ classOptions }: ClassOptionsManagerProps) 
       }
 
       toast.success(`Đã xóa lớp ${classStudentId}`);
-      startTransition(() => router.refresh());
+      
+      // Refresh data locally
+      await fetchData();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra");
     } finally {
       setDeletingId(null);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -104,12 +130,14 @@ export function ClassOptionsManager({ classOptions }: ClassOptionsManagerProps) 
           value={newClassId}
           onChange={(e) => setNewClassId(e.target.value)}
           className="flex-1 max-w-[200px]"
+          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
         />
         <Input
           placeholder="Mô tả (tùy chọn)"
           value={newDescription}
           onChange={(e) => setNewDescription(e.target.value)}
           className="flex-1"
+          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
         />
         <Button onClick={handleAdd} disabled={isAdding || !newClassId.trim()}>
           {isAdding ? (
@@ -118,6 +146,9 @@ export function ClassOptionsManager({ classOptions }: ClassOptionsManagerProps) 
             <Plus className="h-4 w-4" />
           )}
           <span className="ml-1">Thêm</span>
+        </Button>
+        <Button variant="outline" size="icon" onClick={fetchData} title="Làm mới">
+          <RefreshCcw className="h-4 w-4" />
         </Button>
       </div>
 
@@ -159,7 +190,7 @@ export function ClassOptionsManager({ classOptions }: ClassOptionsManagerProps) 
                       variant="ghost"
                       size="icon"
                       onClick={() => handleDelete(option.id, option.classStudentId)}
-                      disabled={deletingId === option.id || isPending}
+                      disabled={deletingId === option.id}
                       className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
                     >
                       {deletingId === option.id ? (
