@@ -1,16 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import {
+  checkRateLimit,
+  getRateLimitHeaders,
+  DEFAULT_RATE_LIMIT,
+} from "@/lib/rate-limit";
 
 /**
  * External API v1 - Get student by studentId
  * Authentication: API Key in X-API-Key header
+ * Rate Limit: 100 requests per minute per API key
  */
 
-async function validateApiKey(request: NextRequest): Promise<boolean> {
+async function validateApiKey(request: NextRequest): Promise<string | null> {
   const apiKey = request.headers.get("X-API-Key");
 
   if (!apiKey) {
-    return false;
+    return null;
   }
 
   const key = await prisma.apiKey.findUnique({
@@ -18,11 +24,11 @@ async function validateApiKey(request: NextRequest): Promise<boolean> {
   });
 
   if (!key || !key.isActive) {
-    return false;
+    return null;
   }
 
   if (!key.permissions.includes("read:students")) {
-    return false;
+    return null;
   }
 
   await prisma.apiKey.update({
@@ -30,19 +36,37 @@ async function validateApiKey(request: NextRequest): Promise<boolean> {
     data: { lastUsedAt: new Date() },
   });
 
-  return true;
+  return key.id;
 }
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ studentId: string }> }
 ) {
-  const isValid = await validateApiKey(request);
+  const keyId = await validateApiKey(request);
 
-  if (!isValid) {
+  if (!keyId) {
     return NextResponse.json(
       { success: false, error: "Unauthorized", message: "Invalid or missing API key" },
       { status: 401 }
+    );
+  }
+
+  // Check rate limit
+  const rateLimitResult = checkRateLimit(keyId, DEFAULT_RATE_LIMIT);
+
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Too Many Requests",
+        message: `Rate limit exceeded. Try again in ${rateLimitResult.retryAfterSeconds} seconds.`,
+        retryAfter: rateLimitResult.retryAfterSeconds,
+      },
+      {
+        status: 429,
+        headers: getRateLimitHeaders(rateLimitResult),
+      }
     );
   }
 
