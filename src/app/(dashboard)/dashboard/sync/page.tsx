@@ -6,6 +6,8 @@ import { PortalLoginForm } from "@/components/features/sync/portal-login-form";
 import { ClassOptionsManager } from "@/components/features/sync/class-options-manager";
 import { RefreshCcw, CheckCircle, XCircle, AlertCircle, KeyRound, Settings } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 async function getSyncLogs() {
   return prisma.syncLog.findMany({
     orderBy: { createdAt: "desc" },

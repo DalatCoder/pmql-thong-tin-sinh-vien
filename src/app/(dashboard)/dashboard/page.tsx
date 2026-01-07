@@ -2,6 +2,9 @@ import { Users, GraduationCap, RefreshCcw, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import prisma from "@/lib/prisma";
 
+// Disable static generation - always fetch fresh data
+export const dynamic = "force-dynamic";
+
 async function getStats() {
   const [totalStudents, totalClasses, activeStudents, recentSyncs] = await Promise.all([
     prisma.student.count(),

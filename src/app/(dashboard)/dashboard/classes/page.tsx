@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/table";
 import { GraduationCap, Users, Eye, RefreshCcw } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 async function getClasses() {
   return prisma.class.findMany({
     orderBy: { classStudentId: "asc" },

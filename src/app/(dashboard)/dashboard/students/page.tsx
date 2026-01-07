@@ -1,6 +1,8 @@
 import prisma from "@/lib/prisma";
 import { StudentsTable } from "@/components/features/students/students-table";
 
+export const dynamic = "force-dynamic";
+
 interface Props {
   searchParams: Promise<{
     search?: string;
