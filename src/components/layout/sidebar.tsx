@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   Settings,
   LogOut,
+  Key,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -28,6 +29,7 @@ const navigation = [
   { name: "Sinh viên", href: "/dashboard/students", icon: Users, color: "text-blue-500", bgColor: "bg-blue-100" },
   { name: "Lớp học", href: "/dashboard/classes", icon: GraduationCap, color: "text-emerald-500", bgColor: "bg-emerald-100" },
   { name: "Đồng bộ", href: "/dashboard/sync", icon: RefreshCcw, color: "text-orange-500", bgColor: "bg-orange-100" },
+  { name: "API Keys", href: "/dashboard/api-keys", icon: Key, color: "text-rose-500", bgColor: "bg-rose-100" },
 ];
 
 export function Sidebar() {
