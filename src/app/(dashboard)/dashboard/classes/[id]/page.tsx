@@ -22,6 +22,20 @@ import {
   Mail,
 } from "lucide-react";
 
+interface Student {
+  id: string;
+  studentId: string;
+  fullName: string;
+  gender: boolean;
+  birthday: Date | null;
+  studyStatusName: string | null;
+  specialtyName: string | null;
+  schoolEmail: string | null;
+  customPhone: string | null;
+  portalPhone: string | null;
+  fileImage: string | null;
+}
+
 interface Props {
   params: Promise<{ id: string }>;
 }
@@ -58,8 +72,8 @@ export default async function ClassDetailPage({ params }: Props) {
     notFound();
   }
 
-  const maleCount = classData.students.filter((s: { gender: boolean }) => s.gender === true).length;
-  const femaleCount = classData.students.filter((s: { gender: boolean }) => s.gender === false).length;
+  const maleCount = classData.students.filter((s: Student) => s.gender === true).length;
+  const femaleCount = classData.students.filter((s: Student) => s.gender === false).length;
 
   const formatPhone = (student: { customPhone: string | null; portalPhone: string | null }) => {
     return student.customPhone || student.portalPhone || "—";
@@ -171,7 +185,7 @@ export default async function ClassDetailPage({ params }: Props) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {classData.students.map((student, index) => (
+                {classData.students.map((student: Student, index: number) => (
                   <TableRow key={student.id}>
                     <TableCell className="text-slate-500">{index + 1}</TableCell>
                     <TableCell>
