@@ -9,11 +9,11 @@ services:
     container_name: pmql-app
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/pmql_sinh_vien?schema=public
       - AUTH_SECRET=${AUTH_SECRET}
-      - AUTH_URL=${AUTH_URL:-http://localhost:3000}
+      - AUTH_URL=${AUTH_URL:-http://localhost:3001}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - PORTAL_API_KEY=${PORTAL_API_KEY}
