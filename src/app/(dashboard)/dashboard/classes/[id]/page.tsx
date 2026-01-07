@@ -58,8 +58,8 @@ export default async function ClassDetailPage({ params }: Props) {
     notFound();
   }
 
-  const maleCount = classData.students.filter((s) => s.gender === true).length;
-  const femaleCount = classData.students.filter((s) => s.gender === false).length;
+  const maleCount = classData.students.filter((s: { gender: boolean }) => s.gender === true).length;
+  const femaleCount = classData.students.filter((s: { gender: boolean }) => s.gender === false).length;
 
   const formatPhone = (student: { customPhone: string | null; portalPhone: string | null }) => {
     return student.customPhone || student.portalPhone || "—";
