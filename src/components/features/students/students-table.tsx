@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, ChevronLeft, ChevronRight, Eye, Phone } from "lucide-react";
+import { ExportDialog } from "./export-dialog";
 
 interface Student {
   id: string;
@@ -119,7 +120,9 @@ export function StudentsTable({ initialData, classes }: StudentsTableProps) {
           </SelectContent>
         </Select>
 
-        <div className="text-sm text-slate-500">
+        <ExportDialog classId={classFilter} search={search} />
+
+        <div className="text-sm text-slate-500 ml-auto">
           Tổng: <strong>{pagination.total}</strong> sinh viên
         </div>
       </div>
