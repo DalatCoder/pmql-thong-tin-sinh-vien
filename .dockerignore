@@ -1,0 +1,36 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+.next
+out
+build
+
+# Docker
+Dockerfile*
+docker-compose*
+.docker
+
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Environment files (copy manually to container)
+.env
+.env.*
+!.env.example
+
+# Misc
+*.md
+*.log
+npm-debug.log*
+.DS_Store
+coverage
+.nyc_output
