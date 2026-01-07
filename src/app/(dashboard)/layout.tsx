@@ -11,6 +11,10 @@ export default async function DashboardLayout({
   // Check authentication on server side
   const session = await auth();
 
+  // console log url and session
+  console.log("URL: ", window.location.href);
+  console.log("Session: ", session);
+
   if (!session?.user) {
     redirect("/login");
   }
