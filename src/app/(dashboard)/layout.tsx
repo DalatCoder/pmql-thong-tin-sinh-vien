@@ -11,11 +11,10 @@ export default async function DashboardLayout({
   // Check authentication on server side
   const session = await auth();
 
-  // console log url and session
-  console.log("URL: ", window.location.href);
-  console.log("Session: ", session);
+  console.log("[Dashboard Layout] Session:", session ? "exists" : "null");
 
   if (!session?.user) {
+    console.log("[Dashboard Layout] No session - redirecting to login");
     redirect("/login");
   }
 
